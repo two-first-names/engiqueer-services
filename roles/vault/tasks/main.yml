@@ -1,0 +1,86 @@
+- name: Add Vault group
+  become: true
+  group:
+    name: "vault"
+    state: present
+
+- name: Add Vault user
+  become: true
+  user:
+    name: "vault"
+    comment: "Vault user"
+    group: "vault"
+    groups: "vault"
+    system: true
+
+- name: Add Vault/Hashicorp apt key
+  apt_key:
+    url: "{{ vault_repository_key_url }}"
+    state: present
+  become: true
+
+- name: Add Vault/Hashicorp apt repo
+  apt_repository:
+    repo: "deb {{ vault_repository_url }} {{ ansible_distribution_release }} main"
+    state: present
+  become: true
+
+- name: Install Vault
+  apt:
+    name: vault
+    state: present
+    update_cache: true
+  become: true
+
+- name: Mask default Vault config from package
+  become: true
+  copy:
+    owner: root
+    group: root
+    mode: "0644"
+    dest: /etc/vault.d/vault.hcl
+    content: |
+      # Placeholder to mask default RPM/DPKG Vault config file.
+      #
+      # Package-installed config would interfere with Ansible-managed config files
+      # in this directory. Keeping an empty placeholder prevents package updates
+      # from re-installing the default config.
+
+- name: Copy Vault service
+  become: true
+  copy:
+    owner: root
+    group: root
+    mode: "0644"
+    src: vault.service
+    dest: /etc/systemd/system/
+  notify:
+    - Restart vault
+
+- name: Copy Vault config
+  become: true
+  template:
+    owner: root
+    group: root
+    mode: "0644"
+    src: vault.hcl.j2
+    dest: /etc/vault.d/main.hcl
+  notify:
+    - Restart vault
+
+- name: Create Vault directory
+  become: true
+  file:
+    owner: vault
+    group: vault
+    mode: "0750"
+    path: /var/lib/vault
+    state: directory
+
+- name: Start Vault
+  become: true
+  service:
+    name: vault
+    daemon_reload: true
+    enabled: true
+    state: started

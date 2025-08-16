@@ -1,0 +1,88 @@
+- name: Add NodeSource apt key
+  apt_key:
+    url: "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key"
+    state: present
+  become: true
+
+- name: Add NodeSource apt repo
+  apt_repository:
+    repo: "deb https://deb.nodesource.com/node_22.x nodistro main"
+    state: present
+  become: true
+
+- name: Install Node
+  apt:
+    name: nodejs
+    state: present
+    update_cache: true
+  become: true
+
+- name: Install unzip
+  apt:
+    name: unzip
+    state: present
+    update_cache: true
+  become: true
+
+- name: add foundryvtt user
+  become: true
+  user:
+    name: foundryvtt
+    createhome: yes
+    home: /var/lib/foundryvtt
+    state: present
+    shell: /bin/bash
+
+- name: Create foundryvtt directory
+  file:
+    state: directory
+    path: /var/foundryvtt/foundryvtt-{{ foundryvtt_version }}
+    owner: foundryvtt
+
+- name: Create foundrydata directory
+  file:
+    state: directory
+    path: /var/foundryvtt/foundrydata
+    owner: foundryvtt
+
+- name: Check if we have already downloaded FoundryVTT
+  stat:
+    path: /var/lib/foundryvtt/FoundryVTT-Node-{{ foundryvtt_version }}.zip
+  register: foundryzip
+
+- name: Download FoundryVTT
+  become: true
+  get_url:
+    dest: /var/lib/foundryvtt/FoundryVTT-Node-{{ foundryvtt_version }}.zip
+    url: "{{ foundryvtt_release_url }}"
+    owner: foundryvtt
+  when: not foundryzip.stat.exists
+
+- name: Unarchive FoundryVTT
+  become: true
+  unarchive:
+    src: /var/lib/foundryvtt/FoundryVTT-Node-{{ foundryvtt_version }}.zip
+    remote_src: true
+    dest: /var/lib/foundryvtt/foundryvtt-{{ foundryvtt_version }}
+    owner: foundryvtt
+
+- name: Create systemd service
+  become: true
+  template:
+    src: foundryvtt.service
+    dest: /etc/systemd/system/foundryvtt.service
+
+- name: Start FoundryVTT
+  become: true
+  service:
+    name: foundryvtt
+    enabled: true
+    state: started
+
+- name: Copy nginx config
+  become: true
+  copy:
+    src: vtt.engiqueer.net
+    dest: /etc/nginx/sites-enabled/
+  notify:
+    - Restart nginx

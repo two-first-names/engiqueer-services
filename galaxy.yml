@@ -1,0 +1,21 @@
+namespace: engiqueer
+name: services
+version: 1.0.0
+
+readme: README.md
+
+authors:
+  - Joe Roberts <joe@engiqueer.net>
+
+description: A collection of services.
+
+license:
+  - MIT
+
+tags: []
+
+dependencies:
+  "engiqueer.common": ">=1.0.0"
+
+# The URL of the originating SCM repository
+repository: http://github.com/two-first-names/engiqueer-services

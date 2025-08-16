@@ -1,0 +1,11 @@
+- name: Restart nginx
+  become: true
+  service:
+    name: nginx
+    state: restarted
+
+- name: Restart FoundryVTT
+  become: true
+  service:
+    name: nginx
+    state: foundryvtt

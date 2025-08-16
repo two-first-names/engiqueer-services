@@ -1,0 +1,9 @@
+vault_architecture_map:
+  amd64: amd64
+  x86_64: amd64
+  armv7l: arm
+  aarch64: arm64
+vault_architecture: "{{ vault_architecture_map[ansible_architecture] }}"
+vault_os: "{{ ansible_system | lower }}"
+vault_repository_url: "https://apt.releases.hashicorp.com"
+vault_repository_key_url: "{{ vault_repository_url }}/gpg"

@@ -1,0 +1,3 @@
+foundryvtt_token: "1753701839-GDlTolpJXxa5tIkPusgUETN8uqE7vZzwAiGrrSZ3lI4%3D"
+foundryvtt_version: "13.346"
+foundryvtt_release_url: https://r2.foundryvtt.com/releases/{{ foundryvtt_version }}/FoundryVTT-Node-{{ foundryvtt_version }}.zip?verify={{ foundryvtt_token }}
