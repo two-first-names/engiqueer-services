@@ -1,0 +1,3 @@
+{% for worker_key in worker_keys["results"] %}
+{{ worker_key["content"] | b64decode }}
+{% endfor %}

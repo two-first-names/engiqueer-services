@@ -1,0 +1,50 @@
+- name: Create concourse directory
+  become: true
+  file:
+    state: directory
+    path: /var/lib/concourse-worker
+  
+- name: Create concourse keys directory
+  become: true
+  file:
+    state: directory
+    path: /var/lib/concourse-worker/keys
+
+- name: Generate worker_key
+  shell: ssh-keygen -t rsa -b 4096 -m PEM -f /var/lib/concourse-worker/keys/worker_key -N ''
+  args:
+    creates: /var/lib/concourse-worker/keys/worker_key
+
+- name: Create concourse keys directory
+  become: true
+  file:
+    state: directory
+    path: /var/lib/concourse-web/keys
+  delegate_to: "{{ groups['concourse-web'][0] }}"
+
+- name: Generate tsa_host_key
+  shell: ssh-keygen -t rsa -b 4096 -m PEM -f /var/lib/concourse-web/keys/tsa_host_key -N ''
+  args:
+    creates: /var/lib/concourse-web/keys/tsa_host_key
+  delegate_to: "{{ groups['concourse-web'][0] }}"
+
+- name: Get tsa_host_key
+  slurp:
+    src: /var/lib/concourse-web/keys/tsa_host_key.pub
+  delegate_to: "{{ groups['concourse-web'][0] }}"
+  register: tsa_host_key
+
+- name: Create tsa_host_key
+  copy:
+    dest: /var/lib/concourse-worker/keys/tsa_host_key.pub
+    content: "{{ tsa_host_key['content'] | b64decode }}"
+
+- name: Copy docker-compose.yml
+  template:
+    src: docker-compose.yml
+    dest: /var/lib/concourse-worker
+
+- name: Start concourse
+  community.docker.docker_compose_v2:
+    project_src: /var/lib/concourse-worker
+    

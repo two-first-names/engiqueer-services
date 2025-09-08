@@ -1,0 +1,18 @@
+services:
+  worker:
+    image: concourse/concourse
+    command: worker
+    privileged: true
+    volumes: 
+    - /var/lib/concourse-worker/keys:/concourse-keys
+    - /var/lib/concourse-worker/data:/data
+    environment:
+      CONCOURSE_WORK_DIR: /data
+      CONCOURSE_TSA_HOST: "{{ groups['concourse-web'][0]}}:2222"
+      CONCOURSE_TSA_PUBLIC_KEY: /concourse-keys/tsa_host_key.pub
+      CONCOURSE_TSA_WORKER_PRIVATE_KEY: /concourse-keys/worker_key
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"

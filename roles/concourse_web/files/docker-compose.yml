@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: concourse
+      POSTGRES_USER: concourse_user
+      POSTGRES_PASSWORD: concourse_pass
+    volumes:
+      - /var/lib/concourse-web/postgresql/data:/var/lib/postgresql/data
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"
+
+  web:
+    image: concourse/concourse
+    command: web
+    links:
+    - db
+    depends_on:
+    - db 
+    ports: 
+    - 127.0.0.1:8080:8080
+    - 2222:2222
+    volumes: 
+    - /var/lib/concourse-web/keys:/concourse-keys
+    environment:
+      CONCOURSE_EXTERNAL_URL: https://ci.engiqueer.net
+      CONCOURSE_POSTGRES_HOST: db
+      CONCOURSE_POSTGRES_USER: concourse_user
+      CONCOURSE_POSTGRES_PASSWORD: concourse_pass
+      CONCOURSE_POSTGRES_DATABASE: concourse
+      CONCOURSE_ADD_LOCAL_USER: test:test
+      CONCOURSE_MAIN_TEAM_LOCAL_USER: test
+      CONCOURSE_SESSION_SIGNING_KEY: /concourse-keys/session_signing_key
+      CONCOURSE_TSA_HOST_KEY: /concourse-keys/tsa_host_key
+      CONCOURSE_TSA_AUTHORIZED_KEYS: /concourse-keys/authorized_worker_keys.pub
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "10m"

@@ -1,0 +1,3 @@
+dependencies:
+- engiqueer.common.docker
+- engiqueer.common.nginx
