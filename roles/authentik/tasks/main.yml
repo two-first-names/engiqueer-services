@@ -1,0 +1,132 @@
+- name: Creates directory
+  become: true
+  file:
+    path: /var/lib/authentik
+    state: directory
+
+- name: Copy docker-compose.yml
+  become: true
+  copy:
+    src: docker-compose.yml
+    dest: /var/lib/authentik/docker-compose.yml
+
+- name: Check if password file exists 
+  become: true
+  ansible.builtin.stat:
+    path: "/tmp/pg_pass"
+  register: file_state
+
+- name: create random password if file absent
+  become: true
+  ansible.builtin.set_fact:
+    pg_pass: "{{ lookup('ansible.builtin.password', '/dev/null') }}"
+  when: not file_state.stat.exists
+
+- name: Write password to file
+  become: true
+  ansible.builtin.lineinfile:
+    line: "{{ pg_pass }}"
+    insertafter: EOF
+    create: true
+    path: "/tmp/pg_pass"
+  when: not file_state.stat.exists
+
+- name: Retrive password if file present
+  become: true
+  ansible.builtin.slurp:
+    src: /tmp/pg_pass
+  when: file_state.stat.exists
+  register: slurp_output
+
+- name: Retrive password if file present
+  become: true
+  ansible.builtin.set_fact:
+    pg_pass: "{{ slurp_output['content'] | b64decode }}"
+  when: file_state.stat.exists
+
+- name: Check if password file exists 
+  become: true
+  ansible.builtin.stat:
+    path: "/tmp/authentik_secret_key"
+  register: file_state
+
+- name: create random password if file absent
+  become: true
+  ansible.builtin.set_fact:
+    authentik_secret_key: "{{ lookup('ansible.builtin.password', '/dev/null') }}"
+  when: not file_state.stat.exists
+
+- name: Write password to file
+  become: true
+  ansible.builtin.lineinfile:
+    line: "{{ authentik_secret_key }}"
+    insertafter: EOF
+    create: true
+    path: "/tmp/authentik_secret_key"
+  when: not file_state.stat.exists
+
+- name: Retrive password if file present
+  become: true
+  ansible.builtin.slurp:
+    src: /tmp/authentik_secret_key
+  when: file_state.stat.exists
+  register: slurp_output
+
+- name: Retrive password if file present
+  become: true
+  ansible.builtin.set_fact:
+    authentik_secret_key: "{{ slurp_output['content'] | b64decode }}"
+  when: file_state.stat.exists
+
+- name: Check if password file exists 
+  become: true
+  ansible.builtin.stat:
+    path: "/tmp/mail_password"
+  register: file_state
+
+- name: create random password if file absent
+  become: true
+  ansible.builtin.set_fact:
+    mail_password: "{{ lookup('ansible.builtin.password', '/dev/null') }}"
+  when: not file_state.stat.exists
+
+- name: Write password to file
+  become: true
+  ansible.builtin.lineinfile:
+    line: "{{ mail_password }}"
+    insertafter: EOF
+    create: true
+    path: "/tmp/mail_password"
+  when: not file_state.stat.exists
+
+- name: Retrive password if file present
+  become: true
+  ansible.builtin.slurp:
+    src: /tmp/mail_password
+  when: file_state.stat.exists
+  register: slurp_output
+
+- name: Retrive password if file present
+  become: true
+  ansible.builtin.set_fact:
+    mail_password: "{{ slurp_output['content'] | b64decode }}"
+  when: file_state.stat.exists
+
+- name: Copy .env
+  become: true
+  template:
+    src: env
+    dest: /var/lib/authentik/.env
+
+- name: Start Authentik
+  become: true
+  community.docker.docker_compose_v2:
+    project_src: /var/lib/authentik
+
+- name: Copy nginx
+  become: true
+  copy:
+    src: sso.engiqueer.net
+    dest: /etc/nginx/sites-enabled
+  notify:
+  - Restart nginx
