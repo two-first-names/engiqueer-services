@@ -1,0 +1,28 @@
+{{ hostname }} {
+  reverse_proxy :9010 {
+    header_up X-Real-IP {remote_host}
+  }
+
+  tls /etc/caddy/cloudflare-edge.crt /etc/caddy/cloudflare-edge.key
+
+  encode zstd gzip
+
+  header / {
+    # Enable HTTP Strict Transport Security (HSTS)
+    Strict-Transport-Security "max-age=31536000;"
+    # Disable cross-site filter (XSS)
+    X-XSS-Protection "0"
+    # Disallow the site to be rendered within a frame (clickjacking protection)
+    X-Frame-Options "DENY"
+    # Prevent search engines from indexing (optional)
+    X-Robots-Tag "noindex, nofollow"
+    # Disallow sniffing of X-Content-Type-Options
+    X-Content-Type-Options "nosniff"
+    # Server name removing
+    -Server
+    # Remove X-Powered-By though this shouldn't be an issue, better opsec to remove
+    -X-Powered-By
+    # Remove Last-Modified because etag is the same and is as effective
+    -Last-Modified
+  }
+}

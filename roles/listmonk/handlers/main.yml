@@ -1,0 +1,9 @@
+- name: Restart caddy
+  service:
+    name: caddy
+    state: restarted
+
+- name: Restart listmonk
+  community.docker.docker_compose_v2:
+    project_src: /var/lib/listmonk
+    state: restarted

@@ -1,0 +1,25 @@
+---
+- name: Copy Caddyfile
+  become: true
+  template:
+    src: Caddyfile
+    dest: /etc/caddy/listmonk.pcs-proud.org.uk.Caddyfile
+  notify: Restart caddy
+
+- name: Create listmonk directory
+  become: true
+  file:
+    path: /var/lib/listmonk
+    state: directory
+
+- name: Copy docker-compose.yml
+  become: true
+  template:
+    src: docker-compose.yml
+    dest: /var/lib/listmonk/docker-compose.yml
+  notify: Restart listmonk
+
+- name: Start listmonk
+  become: true
+  community.docker.docker_compose_v2:
+    project_src: /var/lib/listmonk
