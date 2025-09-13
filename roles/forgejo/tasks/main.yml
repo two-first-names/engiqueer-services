@@ -1,0 +1,57 @@
+- name: Install certbot
+  become: true
+  apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+
+- name: Start renewal timer
+  become: true
+  service:
+    name: certbot.timer
+    enabled: true
+
+- name: Copy certbot-fix-permissions.sh
+  become: true
+  copy:
+    owner: root
+    group: root
+    mode: "0755"
+    src: certbot-fix-permissions.sh
+    dest: /usr/local/bin/
+
+- name: "Get certificate"
+  become: true
+  command: |
+    certbot \
+      --post-hook /usr/local/bin/certbot-fix-permissions.sh \
+      --cert-name git.engiqueer.net-webpki -n --nginx certonly -d git.engiqueer.net
+  args:
+    creates: "/etc/letsencrypt/live/git.engiqueer.net-webpki"
+
+
+- name: Creates directory
+  become: true
+  file:
+    path: /var/lib/forgejo
+    state: directory
+
+- name: Copy docker-compose.yml
+  become: true
+  copy:
+    src: docker-compose.yml
+    dest: /var/lib/forgejo/docker-compose.yml
+
+- name: Start Forgejo
+  become: true
+  community.docker.docker_compose_v2:
+    project_src: /var/lib/forgejo
+
+- name: Copy nginx
+  become: true
+  copy:
+    src: git.engiqueer.net
+    dest: /etc/nginx/sites-enabled
+  notify:
+  - Restart nginx

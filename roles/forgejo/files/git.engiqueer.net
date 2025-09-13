@@ -1,0 +1,23 @@
+server {
+  listen [::]:443 ssl;
+  server_name git.engiqueer.net;
+
+  add_header Strict-Transport-Security "max-age=31536000" always;
+  ssl_stapling on;
+  ssl_stapling_verify on;
+
+  ssl_certificate /etc/letsencrypt/live/git.engiqueer.net-webpki/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/git.engiqueer.net-webpki/privkey.pem;
+  ssl_protocols TLSv1.3;
+
+  # Proxy main concourse traffic
+  location / {
+      proxy_pass http://localhost:3000/;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Protocol $scheme;
+      proxy_set_header X-Forwarded-Host $http_host;
+  }
+}
